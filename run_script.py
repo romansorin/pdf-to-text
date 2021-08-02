@@ -10,21 +10,12 @@ PARSED_DIRECTORY = "parsed"
 PAGES_DIRECTORY = "pages"
 SOURCE_DIRECTORY = "data"
 MATCHES_DIRECTORY = "matches"
-SKIPPED_DIREC_TORY = "skipped"
+SKIPPED_DIRECTORY = "skipped"
 MAX_FILE_MB_SIZE = 3.0
 
 # Define keywords to do an initial and second-pass search for
 extraneous_keywords = []
 search_keywords = [] + extraneous_keywords
-
-
-def main():
-    process_source()
-    reprocess_output()
-
-
-if __name__ == "__main__":
-    main()
 
 
 def process_source():
@@ -160,3 +151,12 @@ def bytesto(bytes, to, bsize=1024):
     a = {'k': 1, 'm': 2, 'g': 3, 't': 4, 'p': 5, 'e': 6}
     r = float(bytes)
     return bytes / (bsize ** a[to])
+
+
+def main():
+    process_source()
+    reprocess_output()
+
+
+if __name__ == "__main__":
+    main()
