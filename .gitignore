@@ -1,0 +1,6 @@
+data/*
+matches/*
+pages/*
+parsed/*
+skipped/*
+.DS_Store
