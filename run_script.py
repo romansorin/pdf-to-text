@@ -23,6 +23,10 @@ def main():
     reprocess_output()
 
 
+if __name__ == "__main__":
+    main()
+
+
 def process_source():
     """Converts all provided PDF files to text and runs the "search_keywords" list over these parsed files to match provided keywords.
     """
