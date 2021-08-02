@@ -1,6 +1,6 @@
 # pdf-to-text
 
-Converts batch of PDF to text files, with optional keyword matching to move results into a separate directory. Utilizes Tesseract OCR and pdf2image.
+Converts batch of PDF to text files, with optional keyword matching to move results into a separate directory. Utilizes Tesseract OCR and pdf2image packages.
 
 ## Install
 

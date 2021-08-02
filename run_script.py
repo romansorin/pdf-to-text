@@ -5,7 +5,7 @@ from pdf2image import convert_from_path
 import os
 import shutil
 
-
+# Define directories
 PARSED_DIRECTORY = "parsed"
 PAGES_DIRECTORY = "pages"
 SOURCE_DIRECTORY = "data"
@@ -13,6 +13,7 @@ MATCHES_DIRECTORY = "matches"
 SKIPPED_DIREC_TORY = "skipped"
 MAX_FILE_MB_SIZE = 3.0
 
+# Define keywords to do an initial and second-pass search for
 extraneous_keywords = []
 search_keywords = [] + extraneous_keywords
 
