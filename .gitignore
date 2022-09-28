@@ -4,3 +4,4 @@ pages/*
 parsed/*
 skipped/*
 .DS_Store
+.venv/

@@ -5,6 +5,8 @@ Converts batch of PDF to text files, with optional keyword matching to move resu
 ## Install
 
 ```
+python3 -m venv .venv && source .venv/bin/activate
+pip install Pillow
 pip install -r requirements.txt
 mkdir data matches parsed pages skipped
 ```

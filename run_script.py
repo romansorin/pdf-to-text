@@ -1,9 +1,9 @@
-from PIL import Image
-import pytesseract
-import sys
-from pdf2image import convert_from_path
 import os
 import shutil
+
+import pytesseract
+from pdf2image import convert_from_path
+from PIL import Image
 
 # Define directories
 PARSED_DIRECTORY = "parsed"
