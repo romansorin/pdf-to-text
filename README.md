@@ -5,6 +5,11 @@ Converts batch of PDF to text files, with optional keyword matching to move resu
 ## Install
 
 ```
+# Linux 
+sudo apt-get install tesseract-ocr
+# Mac
+brew install tesseract
+
 python3 -m venv .venv && source .venv/bin/activate
 pip install Pillow
 pip install -r requirements.txt
