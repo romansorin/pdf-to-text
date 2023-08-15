@@ -41,7 +41,6 @@ pre-commit install
 - [] Convert pdf_to_text.py to command, support flags/arguments
 - [] Allow flags to be passed to configure quantity, output, keywords, etc.
 - [] Add support for subprocesses
-- [] Upgrade requirements to latest compatible versions
 - [] Remote downloads/uploads
 - [] Add tests, mocks/test data
 - [] Linting/formatting rules

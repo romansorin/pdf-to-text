@@ -11,4 +11,4 @@ COPY . .
 
 RUN python3 -m pip install --upgrade pip && pip install -r requirements.txt
 
-CMD ["python", "pdf_to_text.py"]
+CMD ["python", "src/pdf_to_text.py"]
