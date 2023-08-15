@@ -11,4 +11,4 @@ WORKDIR /app
 
 COPY . .
 
-CMD ["python"]
+CMD ["python", "run_script.py"]
