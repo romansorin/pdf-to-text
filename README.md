@@ -43,4 +43,3 @@ pre-commit install
 - [] Add support for subprocesses
 - [] Remote downloads/uploads
 - [] Add tests, mocks/test data
-- [] Linting/formatting rules
