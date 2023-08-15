@@ -20,6 +20,22 @@ After building, run the image with any necessary flags provided:
 docker run pdf-to-text --flags
 ```
 
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+Please make sure to update and add tests as appropriate.
+
+### Local Development
+
+A separate `requirements-dev.txt` file is included for linting, pre-commit checks, testing, etc. To start, create a virtualenv and install all dependencies:
+
+```sh
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt
+pre-commit install
+```
+
 ## Roadmap
 
 - [] Convert pdf_to_text.py to command, support flags/arguments
