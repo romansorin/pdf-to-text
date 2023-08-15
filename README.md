@@ -1,23 +1,27 @@
-# pdf-to-text
+# PDF-to-Text
 
-Converts batch of PDF to text files, with optional keyword matching to move results into a separate directory. Utilizes Tesseract OCR and pdf2image packages.
+Converts a batch of PDF files to text, with optional keyword matching to move matches into a separate directory using the [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) and [pdf2image](https://github.com/Belval/pdf2image) packages.
 
-## Install
+## Installation
 
-```
-# Linux 
-sudo apt-get install tesseract-ocr
-# Mac
-brew install tesseract
+Docker is used to build and run pdf-to-text. To install, verify that you have [Docker](https://www.docker.com) installed, and build the image:
 
-python3 -m venv .venv && source .venv/bin/activate
-pip install Pillow
-pip install -r requirements.txt
-mkdir data matches parsed pages skipped
+```sh
+docker build -t pdf-to-text .
 ```
 
 ## Usage
 
+After building, run the image with any necessary flags provided:
+
+```sh
+docker run pdf-to-text --flags
 ```
-python run_script.py
-```
+
+## Roadmap
+
+[] Convert pdf_to_text.py to command, support flags/arguments
+[] Allow flags to be passed to configure quantity, output, keywords, etc.
+[] Add support for subprocesses
+[] Upgrade requirements to latest compatible versions
+[] Remote downloads/uploads
