@@ -49,8 +49,11 @@ pre-commit install
 
 ## Roadmap
 
-- [ ] Convert pdf_to_text.py to command, support flags/arguments
-- [ ] Allow flags to be passed to configure quantity, output, keywords, etc.
+- [ ] General cleanup, split out multiple operations into separate functions
+- [ ] Convert pdf_to_text.py to command, support flags/arguments to configure behavior
+- [ ] Allow flags to be passed to configure file size limits, output, keywords, etc.
+- [ ] Improve keyword matching, determine why/if re-processing is necessary
 - [ ] Add support for subprocesses
 - [ ] Remote downloads/uploads
+- [ ] Add typing
 - [ ] Add tests, mocks/test data
