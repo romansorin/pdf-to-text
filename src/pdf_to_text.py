@@ -19,8 +19,8 @@ search_keywords = [] + extraneous_keywords
 
 
 def process_source():
-    """Converts all provided PDF files to text and runs the "search_keywords" list over these parsed files to match provided keywords.
-    """
+    """Converts all provided PDF files to text and runs the "search_keywords" list
+    over these parsed files to match provided keywords."""
     files = []
     matches = 0
 
@@ -36,8 +36,8 @@ def process_source():
 
 
 def reprocess_output():
-    """Runs the "extraneous_keywords" list over all of the parsed text files to match additional keywords following initial pdf to text conversion.
-    """
+    """Runs the "extraneous_keywords" list over all of the parsed text files to match
+    additional keywords following initial pdf to text conversion."""
     files = []
     matches = 0
 
@@ -54,8 +54,7 @@ def reprocess_output():
             text = f.read()
             exists = any(term.lower() in text for term in extraneous_keywords)
             if exists:
-                print(
-                    f"Keyword present in file. Moving file to {MATCHES_DIRECTORY}")
+                print(f"Keyword present in file. Moving file to {MATCHES_DIRECTORY}")
                 matches += 1
                 shutil.move(file, f"{MATCHES_DIRECTORY}/{filename}")
 
@@ -82,12 +81,17 @@ def parse_pdf(filename, directory, matches):
     matches_outfile = f"{MATCHES_DIRECTORY}/{base_name}.txt"
     skipped_outfile = f"{SKIPPED_DIRECTORY}/{base_name}.txt"
 
-    if os.path.exists(matches_outfile) or os.path.exists(outfile) or os.path.exists(skipped_outfile):
+    if (
+        os.path.exists(matches_outfile)
+        or os.path.exists(outfile)
+        or os.path.exists(skipped_outfile)
+    ):
         print(f"File {filename} has already been parsed, skipping")
         return matches
 
-    # Skip parsing files over the designated file size to prevent timeouts or resource-intensive instances
-    if bytesto(filesize, 'm') > MAX_FILE_MB_SIZE:
+    # Skip parsing files over the designated file size
+    # to prevent timeouts or resource-intensive instances
+    if bytesto(filesize, "m") > MAX_FILE_MB_SIZE:
         print(f"File {filename} exceeds 3mb limit, skipping")
         f = open(skipped_outfile, "a")
         f.write(f"SKIPPED, byte size {filesize}")
@@ -96,14 +100,15 @@ def parse_pdf(filename, directory, matches):
 
     try:
         pages = convert_from_path(path, 500)
-    except:
+    except Exception as exc:
+        print(exc)
         return matches
     image_counter = 1
 
     for page in pages:
         filename = get_page_filename(image_counter, base_name)
         print(f"Saving page: {filename}")
-        page.save(filename, 'JPEG')
+        page.save(filename, "JPEG")
         image_counter += 1
 
     filelimit = image_counter - 1
@@ -115,7 +120,7 @@ def parse_pdf(filename, directory, matches):
         filename = get_page_filename(i, base_name)
 
         text = str(((pytesseract.image_to_string(Image.open(filename)))))
-        text = text.replace('-\n', '')
+        text = text.replace("-\n", "")
 
         exists = any(term.lower() in text for term in search_keywords)
 
@@ -148,8 +153,7 @@ def get_page_filename(i, base_name):
 
 
 def bytesto(bytes, to, bsize=1024):
-    a = {'k': 1, 'm': 2, 'g': 3, 't': 4, 'p': 5, 'e': 6}
-    r = float(bytes)
+    a = {"k": 1, "m": 2, "g": 3, "t": 4, "p": 5, "e": 6}
     return bytes / (bsize ** a[to])
 
 

@@ -4,6 +4,17 @@ Converts a batch of PDF files to text, with optional keyword matching to move ma
 
 pdf-to-text was originally built as an afternoon project to aid a close friend in quickly locating relevant information after receiving several thousands of PDFs in an open records request.
 
+# How pdf2t works
+
+PDF-to-Text (`pdf2t`) works by:
+
+Given a source directory containing PDFs,
+  - Convert the PDF file into a JPEG using pdf2image, placing all pdf -> JPEG conversions into the `PAGES` directory
+  - Extract all text from the JPEG using pytesseract, placing the extracted text into the `PARSED` directory
+  - Given a list of search or match keywords, check if any of these keywords are present within the extracted text; if a keyword is present, move the text file to the `MATCHES` directory
+  - If a MAX_FILE size is provided, any PDFs that exceed this size will be moved to the `SKIPPED` directory for later processing
+  - Any source PDFs remaining in the `PAGES` directory (i.e., not skipped) are then deleted
+
 ## Installation
 
 Docker is used to build and run pdf-to-text. To install, verify that you have [Docker](https://www.docker.com) installed, and build the image:
@@ -38,8 +49,8 @@ pre-commit install
 
 ## Roadmap
 
-- [] Convert pdf_to_text.py to command, support flags/arguments
-- [] Allow flags to be passed to configure quantity, output, keywords, etc.
-- [] Add support for subprocesses
-- [] Remote downloads/uploads
-- [] Add tests, mocks/test data
+- [ ] Convert pdf_to_text.py to command, support flags/arguments
+- [ ] Allow flags to be passed to configure quantity, output, keywords, etc.
+- [ ] Add support for subprocesses
+- [ ] Remote downloads/uploads
+- [ ] Add tests, mocks/test data
