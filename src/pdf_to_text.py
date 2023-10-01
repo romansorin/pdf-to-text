@@ -6,11 +6,11 @@ from pdf2image import convert_from_path
 from PIL import Image
 
 # Define directories
-PARSED_DIRECTORY = "parsed"
-PAGES_DIRECTORY = "pages"
-SOURCE_DIRECTORY = "data"
-MATCHES_DIRECTORY = "matches"
-SKIPPED_DIRECTORY = "skipped"
+PARSED_DIRECTORY = "output/parsed/"
+PAGES_DIRECTORY = "output/pages/"
+SOURCE_DIRECTORY = "data/"
+MATCHES_DIRECTORY = "output/matches/"
+SKIPPED_DIRECTORY = "output/skipped/"
 MAX_FILE_MB_SIZE = 3.0
 
 # Define keywords to do an initial and second-pass search for
@@ -24,6 +24,7 @@ def process_source():
     files = []
     matches = 0
 
+    os.makedirs(os.path.dirname(SOURCE_DIRECTORY), exist_ok=True)
     for filename in os.listdir(SOURCE_DIRECTORY):
         if os.path.splitext(filename)[1] == ".pdf":
             print(f"Found PDF: {filename}")
@@ -41,6 +42,7 @@ def reprocess_output():
     files = []
     matches = 0
 
+    os.makedirs(os.path.dirname(PARSED_DIRECTORY), exist_ok=True)
     for filename in os.listdir(PARSED_DIRECTORY):
         if os.path.splitext(filename)[1] == ".txt":
             print(f"Found file: {filename}")
@@ -56,6 +58,7 @@ def reprocess_output():
             if exists:
                 print(f"Keyword present in file. Moving file to {MATCHES_DIRECTORY}")
                 matches += 1
+                os.makedirs(os.path.dirname(MATCHES_DIRECTORY), exist_ok=True)
                 shutil.move(file, f"{MATCHES_DIRECTORY}/{filename}")
 
     print(f"Finished processing all files. Found {matches} keyword matches")
@@ -93,9 +96,9 @@ def parse_pdf(filename, directory, matches):
     # to prevent timeouts or resource-intensive instances
     if bytesto(filesize, "m") > MAX_FILE_MB_SIZE:
         print(f"File {filename} exceeds 3mb limit, skipping")
-        f = open(skipped_outfile, "a")
-        f.write(f"SKIPPED, byte size {filesize}")
-        f.close()
+        os.makedirs(os.path.dirname(SKIPPED_DIRECTORY), exist_ok=True)
+        with open(skipped_outfile, "a") as f:
+            f.write(f"SKIPPED, byte size {filesize}")
         return matches
 
     try:
@@ -106,6 +109,7 @@ def parse_pdf(filename, directory, matches):
     image_counter = 1
 
     for page in pages:
+        os.makedirs(os.path.dirname(PAGES_DIRECTORY), exist_ok=True)
         filename = get_page_filename(image_counter, base_name)
         print(f"Saving page: {filename}")
         page.save(filename, "JPEG")
@@ -113,24 +117,23 @@ def parse_pdf(filename, directory, matches):
 
     filelimit = image_counter - 1
 
-    f = open(outfile, "a")
+    os.makedirs(os.path.dirname(PARSED_DIRECTORY), exist_ok=True)
     exists = False
+    with open(outfile, "a") as f:
+        for i in range(1, filelimit + 1):
+            filename = get_page_filename(i, base_name)
 
-    for i in range(1, filelimit + 1):
-        filename = get_page_filename(i, base_name)
+            text = str(((pytesseract.image_to_string(Image.open(filename)))))
+            text = text.replace("-\n", "")
 
-        text = str(((pytesseract.image_to_string(Image.open(filename)))))
-        text = text.replace("-\n", "")
+            exists = any(term.lower() in text for term in search_keywords)
 
-        exists = any(term.lower() in text for term in search_keywords)
-
-        f.write(text)
-
-    f.close()
+            f.write(text)
 
     if exists:
         print(f"Keyword present in file. Moving file to {MATCHES_DIRECTORY}")
         matches += 1
+        os.makedirs(os.path.dirname(MATCHES_DIRECTORY), exist_ok=True)
         shutil.move(outfile, matches_outfile)
 
     print(f"Finished writing file: {outfile}")
