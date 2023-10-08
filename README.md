@@ -17,43 +17,35 @@ Given a source directory containing PDFs,
 
 ## Installation
 
-Docker is used to build and run pdf-to-text. To install, verify that you have [Docker](https://www.docker.com) installed, and build the image:
+Usage of `pdf2t` requires [Tesseract OCR](https://tesseract-ocr.github.io/tessdoc/Installation.html) as well as package dependencies:
 
 ```sh
-docker build -t pdf-to-text .
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 ## Usage
 
-After building, run the image with any necessary flags provided:
+After installing dependencies, you can run the `pdf_to_text` command with the `-h` flag to see all available options:
 
 ```sh
-docker run pdf-to-text --flags
+python src/pdf_to_text.py -h
 ```
 
-## Contributing
-
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update and add tests as appropriate.
 
 ### Local Development
 
 A separate `requirements-dev.txt` file is included for linting, pre-commit checks, testing, etc. To start, create a virtualenv and install all dependencies:
 
 ```sh
-python3 -m venv .venv && source .venv/bin/activate
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 pre-commit install
 ```
 
 ## Roadmap
 
-- [ ] General cleanup, split out multiple operations into separate functions
-- [ ] Convert pdf_to_text.py to command, support flags/arguments to configure behavior
-- [ ] Allow flags to be passed to configure file size limits, output, keywords, etc.
-- [ ] Improve keyword matching, determine why/if re-processing is necessary
-- [ ] Add support for subprocesses
+- [ ] Improve keyword matching (e.g., fuzzy/typo checks)
+- [ ] Add support for chunks/multiprocessing
 - [ ] Remote downloads/uploads
-- [ ] Add typing
 - [ ] Add tests, mocks/test data
