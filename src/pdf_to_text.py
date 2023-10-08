@@ -166,8 +166,8 @@ def find_keyword_matches(
         path: str = os.path.join(output_directory, filename)
 
         with open(path, "r") as fp:
-            text = fp.read()
-            exists = any(term.lower() in text for term in keywords)
+            text: str = fp.read()
+            exists: bool = any(term.lower() in text for term in keywords)
             if exists:
                 logger.info(
                     f"Keyword present in file. Moving file to {DIRECTORIES['matches']}"
