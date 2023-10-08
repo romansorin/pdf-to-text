@@ -39,7 +39,8 @@ def main():
 
 def get_args() -> argparse.Namespace:
     # TODO: add additional arguments for progress (tqdm), logging/verbose.
-    # keep converted files for debug instead of performing cleanup (such as image debugging)
+    # keep converted files for debug
+    # instead of performing cleanup (such as image debugging)
     # add chunks to prevent loading all files at once if input directory is large
 
     parser = argparse.ArgumentParser()
