@@ -10,7 +10,10 @@ import pytesseract
 from pdf2image import convert_from_path
 from PIL import Image
 
-logger = logging.getLogger()
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s: %(message)s"
+)
+logger = logging.getLogger("pdf_to_text")
 
 DIRECTORIES: dict[str, str] = {
     "input": "data/",
@@ -26,7 +29,7 @@ def main():
     args: argparse.Namespace = get_args()
 
     if not args.match_only:
-        parse_source_pdfs(max_file_size_kb=args.max_size)
+        parse_source_pdfs(max_file_size_kb=args.max_size, reprocess=args.reprocess)
     if len(args.keywords):
         find_keyword_matches(
             output_directory=args.output_directory,
@@ -87,6 +90,7 @@ def get_args() -> argparse.Namespace:
 def parse_source_pdfs(
     source_directory: str = DIRECTORIES["input"],
     max_file_size_kb: int = DEFAULT_MAX_FILE_SIZE_KB,
+    reprocess: int = False,
 ) -> None:
     files: list[str] = []
 
@@ -96,15 +100,18 @@ def parse_source_pdfs(
             logger.info(f"Found PDF: {filename=}")
             files.append(filename)
 
-    logger.info(f"Processing files ({len(files)=})")
+    logger.info(f"Processing {len(files)} file(s)")
     for filename in files:
-        parse_pdf(filename, source_directory, max_file_size_kb=max_file_size_kb)
+        parse_pdf(
+            filename,
+            source_directory,
+            max_file_size_kb=max_file_size_kb,
+            reprocess=reprocess,
+        )
 
 
 def parse_pdf(
-    filename: str,
-    directory: str,
-    max_file_size_kb: int,
+    filename: str, directory: str, max_file_size_kb: int, reprocess: bool
 ) -> None:
     logger.info(f"Parsing: {filename=}")
 
@@ -113,10 +120,10 @@ def parse_pdf(
     filesize: int = os.path.getsize(path)
 
     (root, _) = os.path.splitext(filename)
-    parsed_filepath: str = f"{DIRECTORIES['output']}/{root}.txt"
-    skipped_filepath: str = f"{DIRECTORIES['skipped']}/{root}.txt"
+    parsed_filepath: str = os.path.join(DIRECTORIES["output"], f"{root}.txt")
+    skipped_filepath: str = os.path.join(DIRECTORIES["skipped"], f"{root}.txt")
 
-    if any(
+    if not reprocess and any(
         (os.path.exists(parsed_filepath), os.path.exists(skipped_filepath)),
     ):
         logger.info(f"File {filename=} has already been parsed, skipping")
