@@ -11,7 +11,7 @@ from PIL import Image
 
 logger = logging.getLogger()
 
-DIRECTORIES: dict = {
+DIRECTORIES: dict[str, str] = {
     "input": "data/",
     "output": "output/parsed/",
     "pages": "output/pages/",
@@ -21,10 +21,22 @@ DIRECTORIES: dict = {
 DEFAULT_MAX_FILE_SIZE_KB: int = 5120
 
 
-def get_args():
+def main():
+    args: argparse.Namespace = get_args()
+
+    if not args.match_only:
+        parse_source_pdfs(keywords=args.keywords, max_file_size_kb=args.max_size)
+    if len(args.keywords):
+        find_keyword_matches(
+            output_directory=args.output_directory,
+            keywords=args.keywords,
+        )
+
+
+def get_args() -> argparse.Namespace:
     # TODO: add additional arguments for progress (tqdm), logging/verbose.
-    # add flags to run parsing, matching/searching separately,
-    # keep converted files for debug
+    # keep converted files for debug instead of performing cleanup (such as image debugging)
+    # add chunks to prevent loading all files at once if input directory is large
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -38,6 +50,12 @@ def get_args():
         ),
     )
     parser.add_argument(
+        "-M",
+        "--match-only",
+        action="store_true",
+        help="If true, only keyword matching will be performed.",
+    )
+    parser.add_argument(
         "-I",
         "--input-directory",
         type=str,
@@ -49,7 +67,7 @@ def get_args():
         "--output-directory",
         type=str,
         default=DIRECTORIES["output"],
-        help="The relative directory containing the converted PDF-to-text files.",
+        help="The relative directory containing the converted text files.",
     )
     parser.add_argument(
         "--reprocess",
@@ -65,165 +83,144 @@ def get_args():
     return parser.parse_args()
 
 
-def process_source(
+def parse_source_pdfs(
     source_directory: str = DIRECTORIES["input"],
     max_file_size_kb: int = DEFAULT_MAX_FILE_SIZE_KB,
-):
-    """Converts all provided PDF files to text and runs the "search_keywords" list
-    over these parsed files to match provided keywords."""
-    files = []
-    matches = 0
+) -> None:
+    files: list[str] = []
 
     os.makedirs(os.path.dirname(source_directory), exist_ok=True)
     for filename in os.listdir(source_directory):
-        if os.path.splitext(filename)[1] == ".pdf":
-            print(f"Found PDF: {filename}")
+        if os.path.splitext(filename)[-1] == ".pdf":
+            logger.info(f"Found PDF: {filename=}")
             files.append(filename)
 
-    print(f"Processing files ({len(files)})")
+    logger.info(f"Processing files ({len(files)=})")
     for filename in files:
-        matches = parse_pdf(
-            filename, source_directory, matches, max_file_size_kb=max_file_size_kb
-        )
-    print(f"Finished processing all files. Found {matches} keyword matches")
+        parse_pdf(filename, source_directory, max_file_size_kb=max_file_size_kb)
 
 
-# TODO: remove, add argument to strictly search over parsed files
-def reprocess_output(
+def find_keyword_matches(
     output_directory: str = DIRECTORIES["output"], keywords: list[str] = []
 ):
-    """Runs the "keywords" list over all of the parsed text files to match
-    additional keywords following initial pdf to text conversion."""
     files = []
     matches_count = 0
 
     os.makedirs(os.path.dirname(output_directory), exist_ok=True)
     for filename in os.listdir(output_directory):
         if os.path.splitext(filename)[1] == ".txt":
-            print(f"Found file: {filename}")
+            logger.info(f"Found file: {filename}")
             files.append(filename)
 
-    print(f"Processing files ({len(files)})")
+    logger.info(f"Processing files ({len(files)})")
     for filename in files:
-        print(f"Checking file {filename}")
+        logger.info(f"Checking file {filename}")
         file = os.path.join(output_directory, filename)
         with open(file, "r") as f:
             text = f.read()
             exists = any(term.lower() in text for term in keywords)
             if exists:
-                print(
+                logger.info(
                     f"Keyword present in file. Moving file to {DIRECTORIES['matches']}"
                 )
                 matches_count += 1
                 os.makedirs(os.path.dirname(DIRECTORIES["matches"]), exist_ok=True)
                 shutil.move(file, f"{DIRECTORIES['matches']}/{filename}")
 
-    print(f"Finished processing all files. Found {matches_count} keyword matches")
+    logger.info(f"Finished processing all files. Found {matches_count} keyword matches")
 
 
-def parse_pdf(filename, directory, matches, keywords: list[str], max_file_size_kb: int):
-    """Converts a PDF file into a text file.
+def parse_pdf(
+    filename: str,
+    directory: str,
+    max_file_size_kb: int,
+) -> None:
+    logger.info(f"Parsing: {filename=}")
 
-    Args:
-        filename (str): The name of the PDF
-        directory (str): The directory where the PDF is found
-        matches (int): A count of files that have been matched against keywords
+    root: str
+    path: str = f"{directory}/{filename}"
+    filesize: int = os.path.getsize(path)
 
-    Returns:
-        [int]: A count of files that have been matched against keywords
-    """
-    print(f"Beginning file parsing: {filename}")
-    path = f"{directory}/{filename}"
-    filesize = os.path.getsize(path)
-    (base_name, ext) = os.path.splitext(filename)
+    (root,) = os.path.splitext(filename)
+    parsed_filepath: str = f"{DIRECTORIES['output']}/{root}.txt"
+    skipped_filepath: str = f"{DIRECTORIES['skipped']}/{root}.txt"
 
-    outfile = f"{DIRECTORIES['output']}/{base_name}.txt"
-    matches_outfile = f"{DIRECTORIES['matches']}/{base_name}.txt"
-    skipped_outfile = f"{DIRECTORIES['skipped']}/{base_name}.txt"
-
-    if (
-        os.path.exists(matches_outfile)
-        or os.path.exists(outfile)
-        or os.path.exists(skipped_outfile)
+    if any(
+        os.path.exists(parsed_filepath),
+        os.path.exists(skipped_filepath),
     ):
-        print(f"File {filename} has already been parsed, skipping")
-        return matches
+        logger.info(f"File {filename=} has already been parsed, skipping")
+        return
 
-    # Skip parsing files over the designated file size
-    # to prevent timeouts or resource-intensive instances
     if bytesto(filesize) > max_file_size_kb:
-        print(f"File {filename} exceeds {max_file_size_kb} limit, skipping")
+        logger.info(f"File {filename} exceeds {max_file_size_kb} limit, skipping")
         os.makedirs(os.path.dirname(DIRECTORIES["skipped"]), exist_ok=True)
-        with open(skipped_outfile, "a") as f:
-            f.write(f"SKIPPED, byte size {filesize}")
-        return matches
+        with open(skipped_filepath, "a") as fp:
+            fp.write(f"SKIPPED {filename=}, byte size {filesize=}kb")
+        return
 
     try:
-        pages = convert_from_path(path, 500)
-    except Exception as exc:
-        print(exc)
-        return matches
-    image_counter = 1
+        convert_pdf_to_txt(path, root, parsed_filepath)
+    except Exception:
+        raise
+
+    remove_converted_pdf_images()
+
+    logger.info(f"Finished writing file: {parsed_filepath}")
+
+
+def convert_pdf_to_img(pages: str, base_name: str) -> int:
+    image_count: int = 0
 
     for page in pages:
         os.makedirs(os.path.dirname(DIRECTORIES["input"]), exist_ok=True)
-        filename = get_page_filename(image_counter, base_name)
-        print(f"Saving page: {filename}")
+        filename: str = get_pdf_img_filename(
+            image_count, DIRECTORIES["pages"], base_name
+        )
+        logger.info(f"Saving page (image): {filename=}")
         page.save(filename, "JPEG")
-        image_counter += 1
+        image_count += 1
 
-    filelimit = image_counter - 1
+    return image_count
+
+
+def convert_pdf_to_txt(
+    path: str, base_name: str, parsed_filepath: str, keywords: list[str]
+):
+    try:
+        pages: list[Image] = convert_from_path(path, 500)
+    except Exception as exc:
+        logger.error(exc)
+        raise
+
+    image_count = convert_pdf_to_img(pages)
 
     os.makedirs(os.path.dirname(DIRECTORIES["output"]), exist_ok=True)
-    exists = False
-    with open(outfile, "a") as f:
-        for i in range(1, filelimit + 1):
-            filename = get_page_filename(i, base_name)
+    with open(parsed_filepath, "a") as fp:
+        for i in range(0, image_count):
+            filename: str = get_pdf_img_filename(i, base_name)
 
-            text = str(((pytesseract.image_to_string(Image.open(filename)))))
+            text: str = str(((pytesseract.image_to_string(Image.open(filename)))))
             text = text.replace("-\n", "")
 
-            exists = any(term.lower() in text for term in keywords)
+            fp.write(text)
 
-            f.write(text)
 
-    if exists:
-        print(f"Keyword present in file. Moving file to {DIRECTORIES['matches']}")
-        matches += 1
-        os.makedirs(os.path.dirname(DIRECTORIES["matches"]), exist_ok=True)
-        shutil.move(outfile, matches_outfile)
-
-    print(f"Finished writing file: {outfile}")
-
+def remove_converted_pdf_images():
     for filename in os.listdir(DIRECTORIES["pages"]):
-        f = os.path.join(DIRECTORIES["pages"], filename)
-        if os.path.isfile(f):
-            print(f"Removing file: {DIRECTORIES['pages']}/{filename}")
-            os.remove(f)
-
-    print("\n")
-    print("-----------")
-    print("\n")
-
-    return matches
+        path: str = os.path.join(DIRECTORIES["pages"], filename)
+        if os.path.isfile(path):
+            logger.info(f"Removing file: {DIRECTORIES['pages']}/{filename}")
+            os.remove(path)
 
 
-def get_page_filename(i, base_name):
-    return f"{DIRECTORIES['pages']}/{base_name}_page_{str(i)}.jpg"
+def get_pdf_img_filename(i, path: str, base_name: str) -> str:
+    return f"{path}/{base_name}_page_{str(i)}.jpg"
 
 
 def bytesto(bytes, to="k", bsize=1024):
     a = {"k": 1, "m": 2, "g": 3, "t": 4, "p": 5, "e": 6}
     return bytes / (bsize ** a[to])
-
-
-def main():
-    args = get_args()
-    process_source(keywords=args.keywords, max_file_size_kb=args.max_size)
-    reprocess_output(
-        output_directory=args.output_directory,
-        keywords=args.keywords,
-    )
 
 
 if __name__ == "__main__":
