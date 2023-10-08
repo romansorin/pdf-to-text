@@ -5,10 +5,12 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
-RUN apk add -u zlib-dev jpeg-dev gcc musl-dev
+RUN apk add -u zlib-dev jpeg-dev gcc musl-dev poppler-utils tesseract-ocr tesseract-ocr-dev
+
+RUN wget https://github.com/tesseract-ocr/tessdata/raw/main/eng.traineddata -O /usr/share/tessdata/eng.traineddata
 
 COPY . .
 
 RUN python3 -m pip install --upgrade pip && pip install -r requirements.txt
 
-CMD ["python", "src/pdf_to_text.py"]
+ENTRYPOINT ["python", "src/pdf_to_text.py"]
