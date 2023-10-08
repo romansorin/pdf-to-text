@@ -4,9 +4,9 @@ Converts a batch of PDF files to text, with optional keyword matching to move ma
 
 pdf-to-text was originally built as an afternoon project to aid a close friend in quickly locating relevant information after receiving several thousands of PDFs in an open records request.
 
-# How pdf2t works
+# How it works
 
-PDF-to-Text (`pdf2t`) works by:
+PDF-to-Text works by:
 
 Given a source directory containing PDFs,
   - Convert the PDF file into a JPEG using pdf2image, placing all pdf -> JPEG conversions into the `PAGES` directory
@@ -17,7 +17,7 @@ Given a source directory containing PDFs,
 
 ## Installation
 
-Usage of `pdf2t` requires [Tesseract OCR](https://tesseract-ocr.github.io/tessdoc/Installation.html) as well as package dependencies:
+Usage of this package requires [Tesseract OCR](https://tesseract-ocr.github.io/tessdoc/Installation.html) as well as package dependencies:
 
 ```sh
 python -m venv .venv && source .venv/bin/activate
@@ -43,9 +43,12 @@ pip install -r requirements-dev.txt
 pre-commit install
 ```
 
-## Roadmap
+## Roadmap/TODO
 
 - [ ] Improve keyword matching (e.g., fuzzy/typo checks)
 - [ ] Add support for chunks/multiprocessing
 - [ ] Remote downloads/uploads
 - [ ] Add tests, mocks/test data
+- [ ] Add debug/keep flag to keep converted files
+- [ ] Add flag for progress (tqdm)
+- [ ] Add flag for verbose logging (log level)
