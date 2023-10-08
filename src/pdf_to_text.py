@@ -32,8 +32,8 @@ def main():
         parse_source_pdfs(max_file_size_kb=args.max_size, reprocess=args.reprocess)
     if len(args.keywords):
         find_keyword_matches(
-            output_directory=args.output_directory,
             keywords=args.keywords,
+            output_directory=args.output_directory,
         )
 
 
@@ -147,33 +147,35 @@ def parse_pdf(
 
 
 def find_keyword_matches(
-    output_directory: str = DIRECTORIES["output"], keywords: list[str] = []
+    keywords: list[str], output_directory: str = DIRECTORIES["output"]
 ) -> None:
-    files = []
-    matches_count = 0
+    files: list[str] = []
+    match_count: int = 0
 
     os.makedirs(os.path.dirname(output_directory), exist_ok=True)
     for filename in os.listdir(output_directory):
-        if os.path.splitext(filename)[1] == ".txt":
+        if os.path.splitext(filename)[-1] == ".txt":
             logger.info(f"Found file: {filename}")
             files.append(filename)
 
     logger.info(f"Processing files ({len(files)})")
     for filename in files:
         logger.info(f"Checking file {filename}")
-        file = os.path.join(output_directory, filename)
-        with open(file, "r") as f:
-            text = f.read()
+
+        path: str = os.path.join(output_directory, filename)
+
+        with open(path, "r") as fp:
+            text = fp.read()
             exists = any(term.lower() in text for term in keywords)
             if exists:
                 logger.info(
                     f"Keyword present in file. Moving file to {DIRECTORIES['matches']}"
                 )
-                matches_count += 1
+                match_count += 1
                 os.makedirs(os.path.dirname(DIRECTORIES["matches"]), exist_ok=True)
-                shutil.move(file, f"{DIRECTORIES['matches']}/{filename}")
+                shutil.move(path, f"{DIRECTORIES['matches']}/{filename}")
 
-    logger.info(f"Finished processing all files. Found {matches_count} keyword matches")
+    logger.info(f"Finished processing all files. Found {match_count} keyword matches")
 
 
 def convert_pdf_to_txt(path: str, base_name: str, parsed_filepath: str) -> None:
