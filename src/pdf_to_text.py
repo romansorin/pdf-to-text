@@ -143,7 +143,8 @@ def parse_pdf(
 
     try:
         convert_pdf_to_txt(path, root, parsed_filepath, output_directory)
-    except Exception:
+    except Exception as exc:
+        logger.error(exc)
         raise
 
     remove_converted_pdf_images()
@@ -234,7 +235,7 @@ def get_pdf_as_img_filename(page_num: int, path: str, base_name: str) -> str:
     return os.path.join(path, f"{base_name}_page_{page_num}.jpg")
 
 
-def bytesto(bytes: bytes, to: str = "k", bsize: int = 1024) -> Union[int, float]:
+def bytesto(bytes: int, to: str = "k", bsize: int = 1024) -> Union[int, float]:
     a = {"k": 1, "m": 2, "g": 3, "t": 4, "p": 5, "e": 6}
     return bytes / (bsize ** a[to])
 
