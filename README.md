@@ -6,14 +6,12 @@ pdf-to-text was originally built as an afternoon project to aid a close friend i
 
 # How it works
 
-PDF-to-Text works by:
-
 Given a source directory containing PDFs,
-  - Convert the PDF file into a JPEG using pdf2image, placing all pdf -> JPEG conversions into the `PAGES` directory
-  - Extract all text from the JPEG using pytesseract, placing the extracted text into the `PARSED` directory
-  - Given a list of search or match keywords, check if any of these keywords are present within the extracted text; if a keyword is present, move the text file to the `MATCHES` directory
-  - If a MAX_FILE size is provided, any PDFs that exceed this size will be moved to the `SKIPPED` directory for later processing
-  - Any source PDFs remaining in the `PAGES` directory (i.e., not skipped) are then deleted
+1. Convert a PDF file into a JPEG using `pdf2image`, exporting all images into the `output/pages` directory;
+2. Convert the JPEG into TXT using `pytesseract`, exporting the resulting file text into the `output/parsed` directory;
+3. If keywords are provided, scan the text files and check if any keywords are present within the extracted text. If it is, the file is moved to the `output/matches` directory;
+4. By default, or if explicitly provided, PDF file sizes will be checked prior to processing. If the file exceeds the max size, the file is moved to the `output/skipped` directory;
+5. Unless explicitly specified, all images converted from PDF are deleted after the PDF processing stage.
 
 ## Installation
 
