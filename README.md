@@ -49,3 +49,4 @@ pre-commit install
 - [ ] Add support for chunks/multiprocessing
 - [ ] Remote downloads/uploads
 - [ ] Add tests, mocks/test data
+- [ ] Clean up fn arguments, directory references
