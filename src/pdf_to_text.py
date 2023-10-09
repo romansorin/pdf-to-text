@@ -247,7 +247,7 @@ def convert_pdf_to_txt(
                 base_name,
             )
 
-            text: str = str(((pytesseract.image_to_string(Image.open(filename)))))
+            text: str = pytesseract.image_to_string(Image.open(filename))
             text = text.replace("-\n", "")
 
             fp.write(text)
