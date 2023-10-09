@@ -30,6 +30,9 @@ DEFAULT_MAX_FILE_SIZE_KB: int = 5120
 def main() -> None:
     args: argparse.Namespace = get_args()
 
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+
     if not args.match_only:
         parse_source_pdfs(args)
     if len(args.keywords):
@@ -75,6 +78,12 @@ def get_args() -> argparse.Namespace:
         help="Display progress bars.",
     )
     parser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="Enables verbose log statements.",
+    )
+    parser.add_argument(
         "--reprocess",
         "-R",
         action="store_true",
@@ -97,10 +106,12 @@ def parse_source_pdfs(args: argparse.Namespace) -> None:
     os.makedirs(os.path.dirname(source_directory), exist_ok=True)
     for filename in tqdm(os.listdir(source_directory), disable=not args.progress):
         if os.path.splitext(filename)[-1].lower() == ".pdf":
-            logger.info(f"Found PDF: {filename=}")
+            logger.debug(f"Found PDF: {filename=}")
             files.append(filename)
 
-    logger.info(f"Processing {len(files)} file(s)")
+    file_count: int = len(files)
+    logger.info(f"Parsing {file_count} PDF file(s)")
+
     for filename in tqdm(files, disable=not get_args().progress):
         parse_pdf(
             filename,
@@ -110,6 +121,8 @@ def parse_source_pdfs(args: argparse.Namespace) -> None:
             output_directory=args.output_directory,
         )
 
+    logger.info(f"Finished parsing {file_count} PDF file(s)")
+
 
 def parse_pdf(
     filename: str,
@@ -118,7 +131,7 @@ def parse_pdf(
     reprocess: bool,
     output_directory: str,
 ) -> None:
-    logger.info(f"Parsing: {filename=}")
+    logger.debug(f"Parsing: {filename=}")
 
     root: str
     path: str = f"{directory}/{filename}"
@@ -131,14 +144,14 @@ def parse_pdf(
     if not reprocess and any(
         (os.path.exists(parsed_filepath), os.path.exists(skipped_filepath)),
     ):
-        logger.info(f"File {filename=} has already been parsed, skipping")
+        logger.debug(f"File {filename=} has already been parsed, skipping")
         return
 
     if bytesto(filesize) > max_file_size_kb:
-        logger.info(f"File {filename} exceeds {max_file_size_kb} limit, skipping")
+        logger.debug(f"File {filename=} exceeds {max_file_size_kb=} limit, skipping")
         os.makedirs(os.path.dirname(DIRECTORIES["skipped"]), exist_ok=True)
         with open(skipped_filepath, "a") as fp:
-            fp.write(f"SKIPPED {filename=}, byte size {filesize=}kb")
+            fp.write(f"{filename=}:{filesize=}")
         return
 
     try:
@@ -149,7 +162,7 @@ def parse_pdf(
 
     remove_converted_pdf_images()
 
-    logger.info(f"Finished writing file: {parsed_filepath}")
+    logger.debug(f"Finished writing to {parsed_filepath=}")
 
 
 def find_keyword_matches(args: argparse.Namespace) -> None:
@@ -160,12 +173,13 @@ def find_keyword_matches(args: argparse.Namespace) -> None:
     os.makedirs(os.path.dirname(output_directory), exist_ok=True)
     for filename in tqdm(os.listdir(output_directory), disable=not get_args().progress):
         if os.path.splitext(filename)[-1].lower() == ".txt":
-            logger.info(f"Found file: {filename}")
+            logger.debug(f"Found file: {filename}")
             files.append(filename)
 
-    logger.info(f"Processing files ({len(files)})")
+    logger.info(f"Checking for keyword matches in {len(files)} file(s)")
+
     for filename in tqdm(files, disable=not get_args().progress):
-        logger.info(f"Checking file {filename}")
+        logger.debug(f"Checking file {filename}")
 
         path: str = os.path.join(output_directory, filename)
 
@@ -173,14 +187,16 @@ def find_keyword_matches(args: argparse.Namespace) -> None:
             text: str = fp.read()
             exists: bool = any(term.lower() in text for term in args.keywords)
             if exists:
-                logger.info(
-                    f"Keyword present in file. Moving file to {DIRECTORIES['matches']}"
+                logger.debug(
+                    f"Keyword found in {path=}; moving to '{DIRECTORIES['matches']}'"
                 )
                 match_count += 1
                 os.makedirs(os.path.dirname(DIRECTORIES["matches"]), exist_ok=True)
                 shutil.move(path, f"{DIRECTORIES['matches']}/{filename}")
 
-    logger.info(f"Finished processing all files. Found {match_count} keyword matches")
+    logger.info(
+        f"Finished processing all files. Found {match_count} keyword match(es)."
+    )
 
 
 def convert_pdf_to_txt(
@@ -213,7 +229,7 @@ def convert_pdf_to_img(pages: str, base_name: str) -> int:
         filename: str = get_pdf_as_img_filename(
             image_count, DIRECTORIES["pages"], base_name
         )
-        logger.info(f"Saving page (image): {filename=}")
+        logger.debug(f"Saving page (image): {filename=}")
         page.save(filename, "JPEG")
         image_count += 1
 
@@ -227,7 +243,7 @@ def remove_converted_pdf_images() -> None:
         path: str = os.path.join(DIRECTORIES["pages"], filename)
 
         if os.path.isfile(path):
-            logger.info(f"Removing file: {path}")
+            logger.debug(f"Removing file: {path=}")
             os.remove(path)
 
 
