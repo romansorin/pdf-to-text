@@ -90,6 +90,15 @@ def get_args() -> argparse.Namespace:
         help="Reprocess any PDF files that have already been parsed.",
     )
     parser.add_argument(
+        "-k",
+        "--keep-pages",
+        action="store_true",
+        help=(
+            "Prevents deletion of all pages (images) converted from PDF "
+            f"found in the '{DIRECTORIES['pages']} directory.",
+        ),
+    )
+    parser.add_argument(
         "--max-size",
         "-S",
         type=int,
@@ -119,6 +128,7 @@ def parse_source_pdfs(args: argparse.Namespace) -> None:
             max_file_size_kb=args.max_size,
             reprocess=args.reprocess,
             output_directory=args.output_directory,
+            keep_pages=args.keep_pages,
         )
 
     logger.info(f"Finished parsing {file_count} PDF file(s)")
@@ -130,6 +140,7 @@ def parse_pdf(
     max_file_size_kb: int,
     reprocess: bool,
     output_directory: str,
+    keep_pages: bool,
 ) -> None:
     logger.debug(f"Parsing: {filename=}")
 
@@ -160,7 +171,8 @@ def parse_pdf(
         logger.error(exc)
         raise
 
-    remove_converted_pdf_images()
+    if not keep_pages:
+        remove_converted_pdf_images()
 
     logger.debug(f"Finished writing to {parsed_filepath=}")
 
@@ -248,7 +260,7 @@ def remove_converted_pdf_images() -> None:
 
 
 def get_pdf_as_img_filename(page_num: int, path: str, base_name: str) -> str:
-    return os.path.join(path, f"{base_name}_page_{page_num}.jpg")
+    return os.path.join(path, f"{base_name}_{page_num}.jpg")
 
 
 def bytesto(bytes: int, to: str = "k", bsize: int = 1024) -> Union[int, float]:

@@ -49,6 +49,3 @@ pre-commit install
 - [ ] Add support for chunks/multiprocessing
 - [ ] Remote downloads/uploads
 - [ ] Add tests, mocks/test data
-- [ ] Add debug/keep flag to keep converted files
-- [ ] Add flag for progress (tqdm)
-- [ ] Add flag for verbose logging (log level)
