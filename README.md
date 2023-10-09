@@ -45,8 +45,7 @@ pre-commit install
 
 - [ ] Clean up fn arguments, directory references
 - [ ] Improve keyword matching (e.g., fuzzy/typo checks)
+- [ ] Support runnable command
 - [ ] Add tests, mocks/test data
-- [ ] Improve README
-- [ ] Specify single or multi-file input
 - [ ] Add support for chunks/multiprocessing
 - [ ] Remote downloads/uploads
