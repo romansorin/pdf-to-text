@@ -33,6 +33,7 @@ def main() -> None:
 
     if not args.match_only:
         parse_source_pdfs(args)
+
     if len(args.keywords):
         find_keyword_matches(args)
 
@@ -40,7 +41,9 @@ def main() -> None:
 def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "path", type=str, help="Path of the PDF file/directory to parse."
+        "path",
+        type=str,
+        help="Path of the PDF file/directory to parse.",
     )
     parser.add_argument(
         "-K",
@@ -66,6 +69,25 @@ def get_args() -> argparse.Namespace:
         help="The relative directory where converted/matching text files are output.",
     )
     parser.add_argument(
+        "-R",
+        "--reprocess",
+        action="store_true",
+        help="Reprocess any PDF files that have already been parsed.",
+    )
+    parser.add_argument(
+        "-X",
+        "--max-size",
+        type=int,
+        default=DEFAULT_MAX_FILE_SIZE_KB,
+        help="Maximum file size to convert to text in KB. Default: 5MB",
+    )
+    parser.add_argument(
+        "-k",
+        "--keep-converted",
+        action="store_true",
+        help="Don't delete images converted from PDF (useful for debugging).",
+    )
+    parser.add_argument(
         "-p",
         "--progress",
         action="store_true",
@@ -76,25 +98,6 @@ def get_args() -> argparse.Namespace:
         "--verbose",
         action="store_true",
         help="Enables verbose log statements.",
-    )
-    parser.add_argument(
-        "--reprocess",
-        "-R",
-        action="store_true",
-        help="Reprocess any PDF files that have already been parsed.",
-    )
-    parser.add_argument(
-        "-k",
-        "--keep-converted",
-        action="store_true",
-        help="Don't delete images converted from PDF (useful for debugging).",
-    )
-    parser.add_argument(
-        "--max-size",
-        "-X",
-        type=int,
-        default=DEFAULT_MAX_FILE_SIZE_KB,
-        help="Maximum file size to convert to text in KB. Default: 5MB",
     )
     return parser.parse_args()
 
@@ -239,7 +242,9 @@ def convert_pdf_to_txt(
     with open(parsed_filepath, "a") as fp:
         for i in tqdm(range(0, image_count), disable=not get_args().progress):
             filename: str = get_pdf_as_img_filename(
-                i, os.path.join(output_directory, DIRECTORIES["converted"]), base_name
+                i,
+                os.path.join(output_directory, DIRECTORIES["converted"]),
+                base_name,
             )
 
             text: str = str(((pytesseract.image_to_string(Image.open(filename)))))
@@ -252,15 +257,13 @@ def convert_pdf_to_img(
     converted_pages: list[Image], base_name: str, output_directory: str
 ) -> int:
     image_count: int = 0
+    converted_directory: str = os.path.join(output_directory, DIRECTORIES["converted"])
 
     for page in tqdm(converted_pages, disable=not get_args().progress):
-        os.makedirs(
-            os.path.dirname(os.path.join(output_directory, DIRECTORIES["converted"])),
-            exist_ok=True,
-        )
+        os.makedirs(os.path.dirname(converted_directory), exist_ok=True)
         filename: str = get_pdf_as_img_filename(
             image_count,
-            os.path.join(output_directory, DIRECTORIES["converted"]),
+            converted_directory,
             base_name,
         )
         logger.debug(f"Saving page (image): {filename=}")
@@ -271,17 +274,18 @@ def convert_pdf_to_img(
 
 
 def remove_converted_pdf_images(output_directory: str) -> None:
+    converted_directory: str = os.path.join(output_directory, DIRECTORIES["converted"])
+
     for filename in tqdm(
-        os.listdir(os.path.join(output_directory, DIRECTORIES["converted"])),
-        disable=not get_args().progress,
+        os.listdir(converted_directory), disable=not get_args().progress
     ):
-        path: str = os.path.join(output_directory, DIRECTORIES["converted"], filename)
+        path: str = os.path.join(converted_directory, filename)
 
         if os.path.isfile(path):
             logger.debug(f"Removing file: {path=}")
             os.remove(path)
 
-    os.rmdir(os.path.join(output_directory, DIRECTORIES["converted"]))
+    os.rmdir(converted_directory)
 
 
 def get_pdf_as_img_filename(page_num: int, path: str, base_name: str) -> str:
