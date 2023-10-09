@@ -43,8 +43,10 @@ pre-commit install
 
 ## Roadmap/TODO
 
+- [ ] Clean up fn arguments, directory references
 - [ ] Improve keyword matching (e.g., fuzzy/typo checks)
+- [ ] Add tests, mocks/test data
+- [ ] Improve README
+- [ ] Specify single or multi-file input
 - [ ] Add support for chunks/multiprocessing
 - [ ] Remote downloads/uploads
-- [ ] Add tests, mocks/test data
-- [ ] Clean up fn arguments, directory references
