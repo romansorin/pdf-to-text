@@ -27,7 +27,7 @@ DIRECTORIES: dict[str, str] = {
 DEFAULT_MAX_FILE_SIZE_KB: int = 5120
 
 
-def main():
+def main() -> None:
     args: argparse.Namespace = get_args()
 
     if not args.match_only:
@@ -96,7 +96,7 @@ def parse_source_pdfs(args: argparse.Namespace) -> None:
 
     os.makedirs(os.path.dirname(source_directory), exist_ok=True)
     for filename in tqdm(os.listdir(source_directory), disable=not args.progress):
-        if os.path.splitext(filename)[-1] == ".pdf":
+        if os.path.splitext(filename)[-1].lower() == ".pdf":
             logger.info(f"Found PDF: {filename=}")
             files.append(filename)
 
@@ -107,11 +107,16 @@ def parse_source_pdfs(args: argparse.Namespace) -> None:
             source_directory,
             max_file_size_kb=args.max_size,
             reprocess=args.reprocess,
+            output_directory=args.output_directory,
         )
 
 
 def parse_pdf(
-    filename: str, directory: str, max_file_size_kb: int, reprocess: bool
+    filename: str,
+    directory: str,
+    max_file_size_kb: int,
+    reprocess: bool,
+    output_directory: str,
 ) -> None:
     logger.info(f"Parsing: {filename=}")
 
@@ -120,7 +125,7 @@ def parse_pdf(
     filesize: int = os.path.getsize(path)
 
     (root, _) = os.path.splitext(filename)
-    parsed_filepath: str = os.path.join(DIRECTORIES["output"], f"{root}.txt")
+    parsed_filepath: str = os.path.join(output_directory, f"{root}.txt")
     skipped_filepath: str = os.path.join(DIRECTORIES["skipped"], f"{root}.txt")
 
     if not reprocess and any(
@@ -137,7 +142,7 @@ def parse_pdf(
         return
 
     try:
-        convert_pdf_to_txt(path, root, parsed_filepath)
+        convert_pdf_to_txt(path, root, parsed_filepath, output_directory)
     except Exception:
         raise
 
@@ -153,7 +158,7 @@ def find_keyword_matches(args: argparse.Namespace) -> None:
 
     os.makedirs(os.path.dirname(output_directory), exist_ok=True)
     for filename in tqdm(os.listdir(output_directory), disable=not get_args().progress):
-        if os.path.splitext(filename)[-1] == ".txt":
+        if os.path.splitext(filename)[-1].lower() == ".txt":
             logger.info(f"Found file: {filename}")
             files.append(filename)
 
@@ -177,7 +182,9 @@ def find_keyword_matches(args: argparse.Namespace) -> None:
     logger.info(f"Finished processing all files. Found {match_count} keyword matches")
 
 
-def convert_pdf_to_txt(path: str, base_name: str, parsed_filepath: str) -> None:
+def convert_pdf_to_txt(
+    path: str, base_name: str, parsed_filepath: str, output_directory: str
+) -> None:
     try:
         pages: list[Image] = convert_from_path(path, 500)
     except Exception as exc:
@@ -186,7 +193,7 @@ def convert_pdf_to_txt(path: str, base_name: str, parsed_filepath: str) -> None:
 
     image_count: int = convert_pdf_to_img(pages, base_name)
 
-    os.makedirs(os.path.dirname(DIRECTORIES["output"]), exist_ok=True)
+    os.makedirs(os.path.dirname(output_directory), exist_ok=True)
     with open(parsed_filepath, "a") as fp:
         for i in tqdm(range(0, image_count), disable=not get_args().progress):
             filename: str = get_pdf_as_img_filename(i, DIRECTORIES["pages"], base_name)
