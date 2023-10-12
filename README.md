@@ -43,7 +43,14 @@ pre-commit install
 
 ## Roadmap/TODO
 
-- [ ] Improve keyword matching (fuzzy/typo checks, trigrams, etc.)
+- [ ] Allow comma-delimited keywords, phrases
+- [ ] Improve/optimize keyword matching (fuzzy/typo checks, keyphrases, trigrams, case-sensitivity, etc.)
+- [ ] Add ability to compare dates, filtering
+- [ ] Random things like extracting metadata, generate summary, sentiment analysis
+- [ ] PDF table to XLSX/CSV table conversion
+- [ ] Operating chaining/more flexible API
+- [ ] Lite mode/non-GPU req, support for different OCR (?)
+- [ ] Indexing of PDFs and content, searching
 - [ ] Explore pytesseract options (multi-lang support, timeouts, output more data like confidence for use in more complex workflows)
 - [ ] Use temporary directory/temp files for converted PDFs
 - [ ] Support runnable command

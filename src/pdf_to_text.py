@@ -3,13 +3,14 @@ from __future__ import annotations
 import argparse
 import logging
 import os
-import shutil
 from typing import Union
 
 import pytesseract
 from pdf2image import convert_from_path
 from PIL import Image
 from tqdm import tqdm
+import shutil
+from rapidfuzz import fuzz
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s: %(message)s"
@@ -51,7 +52,7 @@ def get_args() -> argparse.Namespace:
         nargs="+",
         default=[],
         help=(
-            "A list of keywords to search for in parsed text files. "
+            "A list of keywords to search for in parsed text files (case-sensitive). "
             f"Matching files will be moved to the {DIRECTORIES['matches']!r} directory."
         ),
     )
@@ -115,7 +116,7 @@ def parse_source_pdfs(args: argparse.Namespace) -> None:
         if ext.lower() == ".pdf":
             files.append(os.path.basename(path))
         else:
-            raise ValueError(f"File has extension {ext.lower()!r}; must be '.pdf'")
+            raise ValueError(f"File has extension {ext!r}; must be of type pdf")
     else:
         for filename in tqdm(os.listdir(path), disable=not args.progress):
             if os.path.splitext(filename)[1].lower() == ".pdf":
@@ -211,10 +212,14 @@ def find_keyword_matches(args: argparse.Namespace) -> None:
         path: str = os.path.join(output_directory, filename)
 
         with open(path, "r") as fp:
-            text: str = fp.read()
-            exists: bool = any(term.lower() in text for term in args.keywords)
+            contents: str = fp.read()
 
-            if exists:
+            # TODO: implement fuzzy matching, arbitrary similarity ratio, CLI arg
+            similarity_ratio: float = any(
+                fuzz.token_set_ratio(contents, term) > 80 for term in args.keywords
+            )
+
+            if any(term in contents for term in args.keywords):
                 logger.debug(
                     f"Keyword found in {path=}; moving to {matches_directory!r}"
                 )
