@@ -3,14 +3,14 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import shutil
 from typing import Union
 
 import pytesseract
 from pdf2image import convert_from_path
 from PIL import Image
-from tqdm import tqdm
-import shutil
 from rapidfuzz import fuzz
+from tqdm import tqdm
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s: %(message)s"
