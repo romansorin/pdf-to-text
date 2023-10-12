@@ -52,7 +52,7 @@ def get_args() -> argparse.Namespace:
         default=[],
         help=(
             "A list of keywords to search for in parsed text files. "
-            f"Matching files will be moved to the '{DIRECTORIES['matches']}' directory."
+            f"Matching files will be moved to the {DIRECTORIES['matches']!r} directory."
         ),
     )
     parser.add_argument(
@@ -107,19 +107,18 @@ def parse_source_pdfs(args: argparse.Namespace) -> None:
     path: str = args.path
 
     if not os.path.exists(path):
-        raise FileNotFoundError(f"File or directory with path '{path}' does not exist.")
+        raise FileNotFoundError(f"File or directory with path {path!r} does not exist.")
 
     if os.path.isfile(path):
-        if os.path.splitext(path)[-1].lower() == ".pdf":
+        (root, ext) = os.path.splitext(path)
+
+        if ext.lower() == ".pdf":
             files.append(os.path.basename(path))
         else:
-            raise ValueError(
-                f"File has extension '{os.path.splitext(path)[-1].lower()}'; "
-                "must be '.pdf'"
-            )
+            raise ValueError(f"File has extension {ext.lower()!r}; must be '.pdf'")
     else:
         for filename in tqdm(os.listdir(path), disable=not args.progress):
-            if os.path.splitext(filename)[-1].lower() == ".pdf":
+            if os.path.splitext(filename)[1].lower() == ".pdf":
                 logger.debug(f"Found PDF: {filename=}")
                 files.append(filename)
 
@@ -200,7 +199,7 @@ def find_keyword_matches(args: argparse.Namespace) -> None:
 
     os.makedirs(os.path.dirname(output_directory), exist_ok=True)
     for filename in tqdm(os.listdir(output_directory), disable=not get_args().progress):
-        if os.path.splitext(filename)[-1].lower() == ".txt":
+        if os.path.splitext(filename)[1].lower() == ".txt":
             logger.debug(f"Found file: {filename}")
             files.append(filename)
 
@@ -214,13 +213,16 @@ def find_keyword_matches(args: argparse.Namespace) -> None:
         with open(path, "r") as fp:
             text: str = fp.read()
             exists: bool = any(term.lower() in text for term in args.keywords)
+
             if exists:
                 logger.debug(
-                    f"Keyword found in {path=}; moving to '{matches_directory}'"
+                    f"Keyword found in {path=}; moving to {matches_directory!r}"
                 )
-                match_count += 1
+
                 os.makedirs(os.path.dirname(matches_directory), exist_ok=True)
                 shutil.move(path, os.path.join(matches_directory, filename))
+
+                match_count += 1
 
     logger.info(
         f"Finished processing all files. Found {match_count} keyword match(es)."
