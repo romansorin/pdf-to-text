@@ -59,3 +59,5 @@ pre-commit install
 - [ ] Add tests, mocks/test data
 - [ ] Add support for chunks/multiprocessing
 - [ ] Remote downloads/uploads
+- [ ] Automatically convert PDF content to markup/custom defined components, such as to HTML or markdown
+ 
