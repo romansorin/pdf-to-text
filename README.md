@@ -4,9 +4,9 @@ Converts a batch of PDF files to text, with optional keyword matching to move ma
 
 pdf-to-text was originally built as an afternoon project to aid a close friend in quickly locating relevant information after receiving several thousands of PDFs in an open records request.
 
-# How it works
+# How it works, and why you should use it
 
-Given a source directory containing PDFs,
+There is literally no good reason to use it. There are numerous packages that do these things better and faster — messing with unreadable and unpredictable data is just fun. With that being said, given a source directory containing PDFs,
 1. Convert a PDF file into a JPEG using `pdf2image`, exporting all images into a temporary directory;
 2. Convert the JPEG into TXT using `pytesseract`, exporting the resulting file text into the output directory;
 3. If keywords are provided, scan the text files and check if any keywords are present within the extracted text. If it is, the file is moved to a `matches` directory with the output directory;
@@ -51,6 +51,8 @@ pre-commit install
 - [ ] Operating chaining/more flexible API
 - [ ] Lite mode/non-GPU req, support for different OCR (?)
 - [ ] Indexing of PDFs and content, searching
+- [ ] Support for PDFs with multi-column, alternating layouts
+- [ ] Better cleanup/parsing post-OCR
 - [ ] Explore pytesseract options (multi-lang support, timeouts, output more data like confidence for use in more complex workflows)
 - [ ] Use temporary directory/temp files for converted PDFs
 - [ ] Support runnable command
