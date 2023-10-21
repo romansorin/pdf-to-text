@@ -48,8 +48,8 @@ pre-commit install
 - [ ] Add ability to compare dates, filtering
 - [ ] Random things like extracting metadata, generate summary, sentiment analysis
 - [ ] PDF table to XLSX/CSV table conversion
-- [ ] Operating chaining/more flexible API
-- [ ] Lite mode/non-GPU req, support for different OCR (?)
+- [ ] Operation chaining/more flexible API
+- [ ] Lite mode/non-GPU req, support for different OCR or ML models
 - [ ] Indexing of PDFs and content, searching
 - [ ] Support for PDFs with multi-column, alternating layouts
 - [ ] Better cleanup/parsing post-OCR
