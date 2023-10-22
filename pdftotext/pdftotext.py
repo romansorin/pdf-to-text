@@ -15,7 +15,7 @@ from tqdm import tqdm
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s: %(message)s"
 )
-logger = logging.getLogger("pdf_to_text")
+logger = logging.getLogger("pdftotext")
 
 DIRECTORIES: dict[str, str] = {
     "output": "output/",
@@ -23,84 +23,6 @@ DIRECTORIES: dict[str, str] = {
     "matches": "matches/",
     "skipped": "skipped/",
 }
-DEFAULT_MAX_FILE_SIZE_KB: int = 5120
-
-
-def main() -> None:
-    args: argparse.Namespace = get_args()
-
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-
-    if not args.match_only:
-        parse_source_pdfs(args)
-
-    if len(args.keywords):
-        find_keyword_matches(args)
-
-
-def get_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "path",
-        type=str,
-        help="Path of the PDF file/directory to parse.",
-    )
-    parser.add_argument(
-        "-K",
-        "--keywords",
-        nargs="+",
-        default=[],
-        help=(
-            "A list of keywords to search for in parsed text files (case-sensitive). "
-            f"Matching files will be moved to the {DIRECTORIES['matches']!r} directory."
-        ),
-    )
-    parser.add_argument(
-        "-M",
-        "--match-only",
-        action="store_true",
-        help="Skip PDF parsing; only keyword matching will be performed.",
-    )
-    parser.add_argument(
-        "-O",
-        "--output-directory",
-        type=str,
-        default=DIRECTORIES["output"],
-        help="The relative directory where converted/matching text files are output.",
-    )
-    parser.add_argument(
-        "-R",
-        "--reprocess",
-        action="store_true",
-        help="Reprocess any PDF files that have already been parsed.",
-    )
-    parser.add_argument(
-        "-X",
-        "--max-size",
-        type=int,
-        default=DEFAULT_MAX_FILE_SIZE_KB,
-        help="Maximum file size to convert to text in KB. Default: 5MB",
-    )
-    parser.add_argument(
-        "-k",
-        "--keep-converted",
-        action="store_true",
-        help="Don't delete images converted from PDF (useful for debugging).",
-    )
-    parser.add_argument(
-        "-p",
-        "--progress",
-        action="store_true",
-        help="Display progress bars.",
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Enables verbose log statements.",
-    )
-    return parser.parse_args()
 
 
 def parse_source_pdfs(args: argparse.Namespace) -> None:
@@ -128,7 +50,7 @@ def parse_source_pdfs(args: argparse.Namespace) -> None:
     # TODO: improve with a skip count, reprocessed count, etc.
     parsed_file_count: int = 0
 
-    for filename in tqdm(files, disable=not get_args().progress):
+    for filename in tqdm(files, disable=not args.progress):
         parsed: bool = parse_pdf(
             filename,
             os.path.dirname(path) if os.path.isfile(path) else path,
@@ -136,6 +58,7 @@ def parse_source_pdfs(args: argparse.Namespace) -> None:
             reprocess=args.reprocess,
             output_directory=args.output_directory,
             keep_converted=args.keep_converted,
+            progress=args.progress,
         )
         if parsed:
             parsed_file_count += 1
@@ -150,6 +73,7 @@ def parse_pdf(
     reprocess: bool,
     output_directory: str,
     keep_converted: bool,
+    progress: bool = False,
 ) -> bool:
     logger.debug(f"Parsing: {filename=}")
 
@@ -180,13 +104,15 @@ def parse_pdf(
         return False
 
     try:
-        convert_pdf_to_txt(path, root, parsed_filepath, output_directory)
+        convert_pdf_to_txt(
+            path, root, parsed_filepath, output_directory, progress=progress
+        )
     except Exception as exc:
         logger.error(exc)
         raise
 
     if not keep_converted:
-        remove_converted_pdf_images(output_directory)
+        remove_converted_pdf_images(output_directory, progress=progress)
 
     logger.debug(f"Finished writing to {parsed_filepath=}")
     return True
@@ -199,14 +125,14 @@ def find_keyword_matches(args: argparse.Namespace) -> None:
     matches_directory: str = os.path.join(output_directory, DIRECTORIES["matches"])
 
     os.makedirs(os.path.dirname(output_directory), exist_ok=True)
-    for filename in tqdm(os.listdir(output_directory), disable=not get_args().progress):
+    for filename in tqdm(os.listdir(output_directory), disable=not args.progress):
         if os.path.splitext(filename)[1].lower() == ".txt":
             logger.debug(f"Found file: {filename}")
             files.append(filename)
 
     logger.info(f"Checking for keyword matches in {len(files)} file(s)")
 
-    for filename in tqdm(files, disable=not get_args().progress):
+    for filename in tqdm(files, disable=not args.progress):
         logger.debug(f"Checking file {filename}")
 
         path: str = os.path.join(output_directory, filename)
@@ -235,7 +161,11 @@ def find_keyword_matches(args: argparse.Namespace) -> None:
 
 
 def convert_pdf_to_txt(
-    path: str, base_name: str, parsed_filepath: str, output_directory: str
+    path: str,
+    base_name: str,
+    parsed_filepath: str,
+    output_directory: str,
+    progress: bool = False,
 ) -> None:
     try:
         converted_pages: list[Image] = convert_from_path(path, 500)
@@ -243,11 +173,13 @@ def convert_pdf_to_txt(
         logger.error(exc)
         raise
 
-    image_count: int = convert_pdf_to_img(converted_pages, base_name, output_directory)
+    image_count: int = convert_pdf_to_img(
+        converted_pages, base_name, output_directory, progress=progress
+    )
 
     os.makedirs(os.path.dirname(output_directory), exist_ok=True)
     with open(parsed_filepath, "a") as fp:
-        for i in tqdm(range(0, image_count), disable=not get_args().progress):
+        for i in tqdm(range(0, image_count), disable=not progress):
             filename: str = get_pdf_as_img_filename(
                 i,
                 os.path.join(output_directory, DIRECTORIES["converted"]),
@@ -261,12 +193,15 @@ def convert_pdf_to_txt(
 
 
 def convert_pdf_to_img(
-    converted_pages: list[Image], base_name: str, output_directory: str
+    converted_pages: list[Image],
+    base_name: str,
+    output_directory: str,
+    progress: bool = False,
 ) -> int:
     image_count: int = 0
     converted_directory: str = os.path.join(output_directory, DIRECTORIES["converted"])
 
-    for page in tqdm(converted_pages, disable=not get_args().progress):
+    for page in tqdm(converted_pages, disable=not progress):
         os.makedirs(os.path.dirname(converted_directory), exist_ok=True)
         filename: str = get_pdf_as_img_filename(
             image_count,
@@ -280,12 +215,10 @@ def convert_pdf_to_img(
     return image_count
 
 
-def remove_converted_pdf_images(output_directory: str) -> None:
+def remove_converted_pdf_images(output_directory: str, progress: bool = False) -> None:
     converted_directory: str = os.path.join(output_directory, DIRECTORIES["converted"])
 
-    for filename in tqdm(
-        os.listdir(converted_directory), disable=not get_args().progress
-    ):
+    for filename in tqdm(os.listdir(converted_directory), disable=not progress):
         path: str = os.path.join(converted_directory, filename)
 
         if os.path.isfile(path):
@@ -302,7 +235,3 @@ def get_pdf_as_img_filename(page_num: int, path: str, base_name: str) -> str:
 def bytesto(bytes: int, to: str = "k", bsize: int = 1024) -> Union[int, float]:
     a = {"k": 1, "m": 2, "g": 3, "t": 4, "p": 5, "e": 6}
     return bytes / (bsize ** a[to])
-
-
-if __name__ == "__main__":
-    main()

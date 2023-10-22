@@ -1,4 +1,6 @@
 [project]
+name = "pdftotext"
+version = "0.1.0"
 requires-python = ">=3.8"
 
 [tool.black]
